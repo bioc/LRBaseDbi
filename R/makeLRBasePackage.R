@@ -2,8 +2,11 @@
 ## This is for constracting original LRBase.XXX.eg.db packages by end-users
 ##
 
-makeLRBasePackage <- function(pkgname, data, metadata, organism, version,
-    maintainer, author, destDir, license="Artistic-2.0"){
+makeLRBasePackage <- function(pkgname, data, metadata, organism,
+    pkgtitle="An annotation package for the LRBaseDb object",
+    pkgdescription=paste("Contains the LRBaseDb object",
+            "to access data from several related annotation packages."),
+    version, maintainer, author, destDir, license="Artistic-2.0"){
 
     # Validate of data
     .validateColNames1(data)
@@ -15,25 +18,21 @@ makeLRBasePackage <- function(pkgname, data, metadata, organism, version,
     ## We need to define some symbols in order to have the
     ## template filled out correctly.
     symvals <- list(
-        PKGTITLE=paste("An annotation package for the LRBaseDb object"),
-        PKGDESCRIPTION=paste("Contains the LRBaseDb object",
-            "to access data from several related annotation packages."),
+        PKGTITLE=pkgtitle,
+        PKGDESCRIPTION=pkgdescription,
         PKGVERSION=version,
         AUTHOR=author,
         MAINTAINER=maintainer,
         LIC=license,
         ORGANISM=organism,
-        ORGANISMBIOCVIEW=gsub(" ","_",organism),
+        ORGANISMBIOCVIEW=gsub(" ", "_", organism),
         PKGNAME=pkgname
     )
-
-    .isSingleString <- function (x){
-        is.character(x) && length(x) == 1L && !is.na(x)
-    }
 
     ## Should never have duplicates
     if (any(duplicated(names(symvals))))
         stop("'symvals' contains duplicated symbols")
+
     ## All symvals should by single strings (non-NA)
     is_OK <- vapply(symvals, .isSingleString, TRUE)
     if (!all(is_OK)) {
@@ -48,31 +47,6 @@ makeLRBasePackage <- function(pkgname, data, metadata, organism, version,
         symbolValues = symvals,
         unlink = TRUE
     )
-
-    # copy vignette
-    .pathRmd <- function(){
-        LIBPATHS = .libPaths()
-        LRPATH = sapply(LIBPATHS, function(x){
-            file.exists(paste0(x, "/LRBaseDbi/doc/LRBaseDbi.Rnw"))
-        })
-        LRPATH = names(LRPATH[which(LRPATH)])
-        if(length(LRPATH) != 0){
-            paste0(LRPATH[1], "/LRBaseDbi/doc/LRBaseDbi.Rnw")
-        }else{
-            stop("The library path is not found!\n")
-        }
-    }
-
-    dir.create(paste0(destDir, "/", pkgname, "/vignettes/"),
-        showWarnings = FALSE, recursive = TRUE)
-    template_rnw <- .pathRmd()
-    new_rnw <- unlist(read.delim(template_rnw, header=FALSE, stringsAsFactor=FALSE))
-    new_rnw <- gsub("LRBaseDbi", pkgname, new_rnw)
-    sink(paste0(destDir, "/", pkgname, "/vignettes/", pkgname, ".Rnw"))
-    for(i in seq_along(new_rnw)){
-        cat(paste0(new_rnw[i], "\n"))
-    }
-    sink()
 
     ## move template to dest
     template_sqlite <- paste0(system.file("DBschemas", package = "LRBaseDbi"),
@@ -129,4 +103,8 @@ makeLRBasePackage <- function(pkgname, data, metadata, organism, version,
     if(colnames(metadata)[2] != "VALUE"){
         stop("Please specify the name of 2nd column as 'VALUE'")
     }
+}
+
+.isSingleString <- function (x){
+    is.character(x) && length(x) == 1L && !is.na(x)
 }
